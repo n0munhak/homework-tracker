@@ -27,6 +27,7 @@ wss.on('connection', (ws, req) => {
             const msg = JSON.parse(data.toString());
             switch (msg.type) {
                 case 'auth':
+                    if (typeof msg.token !== 'string') ws.close();
                     const session = await tokensCollection.findOne({ token: msg.token });
                     if (!session) {
                         ws.send(JSON.stringify({ type: 'unauthorized' }));
@@ -91,6 +92,7 @@ wss.on('connection', (ws, req) => {
             const msg = JSON.parse(data.toString());
             switch (msg.type) {
                 case 'auth':
+                    if (typeof msg.token !== 'string') ws.close();
                     const session = await tokensCollection.findOne({ token: msg.token });
                     if (!session) {
                         ws.send(JSON.stringify({ type: 'unauthorized' }));
