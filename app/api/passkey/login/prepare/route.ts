@@ -12,13 +12,11 @@ export async function GET(request: Request) {
         rpID: new URL('/', process.env.NEXT_PUBLIC_URL || 'http://localhost:3000').hostname,
         userVerification: 'required'
     });
-    let session = '';
-    while (true) {
-        for (let i = 0; i < 64; i++) {
-            session += Math.floor(Math.random() * 16).toString(16);
-        }
-        if (!await sessionsCollection.findOne({ session })) break;
-    }
-    await sessionsCollection.insertOne({ session, challenge: options.challenge });
+    const sessionArray = new Uint8Array(32);
+    crypto.getRandomValues(sessionArray);
+    const session = Array.from(sessionArray).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashedSession = await globalThis.crypto.subtle.digest('SHA-512', sessionArray);
+    const hashedSessionString = Buffer.from(hashedSession).toString('hex');
+    await sessionsCollection.insertOne({ session: hashedSessionString, challenge: options.challenge });
     return new Response(JSON.stringify({ code: 0, session, options }), { status: 200 });
 }
