@@ -18,5 +18,6 @@ export async function GET(request: Request) {
     const hashedSession = await globalThis.crypto.subtle.digest('SHA-512', session);
     const hashedSessionString = Buffer.from(hashedSession).toString('hex');
     await sessionsCollection.insertOne({ session: hashedSessionString, challenge: options.challenge });
+    client.close()
     return new Response(JSON.stringify({ code: 0, session, options }), { status: 200 });
 }
