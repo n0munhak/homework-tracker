@@ -85,7 +85,7 @@ export async function POST(request: Request) {
         passkey.subscriptions.forEach(async (sub: any) => {
             sendNotification(sub, JSON.stringify([{
                 title: passkey.lang == 1 ? 'New Login' : `로그인 알림`,
-                body: passkey.lang == 1 ? `You account was logged in from ${i18n[`browser${browser}`]![1]} on ${i18n[`device${device}`]![1]}.` : `${i18n[`device${device}`]![0]}의 ${i18n[`browser${browser}`]![0]}에서 로그인되었습니다.`,
+                body: passkey.lang == 1 ? `Your account was logged in from ${i18n[`browser${browser}`]![1]} on ${i18n[`device${device}`]![1]}.` : `${i18n[`device${device}`]![0]}의 ${i18n[`browser${browser}`]![0]}에서 로그인되었습니다.`,
                 tag: 'login-notification',
                 url: `/account/devices`
             }])).catch(() => { });
