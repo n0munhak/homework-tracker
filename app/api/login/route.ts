@@ -39,10 +39,9 @@ export async function POST(request: Request) {
             client.close();
             return new Response(JSON.stringify({ code: 1, msg: i18n.PWMismatch[clientLang] }), { status: 401 });
         } else {
-            let token = '';
-            for (let i = 0; i < 64; i++) {
-                token += Math.floor(Math.random() * 16).toString(16);
-            }
+            const tokenBuf = new Uint8Array(32);
+            crypto.getRandomValues(tokenBuf);
+            const token = Array.from(tokenBuf).map(b => b.toString(16).padStart(2, '0')).join('');
             const UAString = request.headers.get('User-Agent') || '';
             let device = 0;
             if (UAString.includes('Windows')) device = 1;
