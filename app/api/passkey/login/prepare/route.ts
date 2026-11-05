@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const sessionArray = new Uint8Array(32);
     crypto.getRandomValues(sessionArray);
     const session = Array.from(sessionArray).map(b => b.toString(16).padStart(2, '0')).join('');
-    const hashedSession = await globalThis.crypto.subtle.digest('SHA-512', session);
+    const hashedSession = await globalThis.crypto.subtle.digest('SHA-512', new TextEncoder().encode(session));
     const hashedSessionString = Buffer.from(hashedSession).toString('hex');
     await sessionsCollection.insertOne({ session: hashedSessionString, challenge: options.challenge });
     client.close()
