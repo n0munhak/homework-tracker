@@ -77,10 +77,9 @@ export async function POST(request: Request) {
         return new Response(JSON.stringify({ code: 1, msg: i18n.existingID[clientLang] }), { status: 400 });
     }
     await usersCollection.insertOne({ id, pwd: hash, salt, firstName: '', lastName: '', perm: 2, accepted: false, passkeys: [], subscriptions: [], allergy: [], flag: 0, lang: clientLang, discordConnected: false, subjects: {} });
-    let token = '';
-    for (let i = 0; i < 64; i++) {
-        token += Math.floor(Math.random() * 16).toString(16);
-    }
+    const tokenBuf = new Uint8Array(32);
+    crypto.getRandomValues(tokenBuf);
+    const token = Array.from(tokenBuf).map(b => b.toString(16).padStart(2, '0')).join('');
     const UAString = request.headers.get('User-Agent') || '';
     let device = 0;
     if (UAString.includes('Windows')) device = 1;
@@ -88,10 +87,10 @@ export async function POST(request: Request) {
         if (request.headers.get('X-Is-Mobile') === '1') device = 5;
         else device = 2;
     }
-    else if (UAString.includes('Linux')) device = 3;
+    else if (UAString.includes('Android')) device = 6;
     else if (UAString.includes('iPhone')) device = 4;
     else if (UAString.includes('iPad')) device = 5;
-    else if (UAString.includes('Android')) device = 6;
+    else if (UAString.includes('Linux')) device = 3;
     let browser = 0;
     if (UAString.includes('Edg')) browser = 4
     else if (UAString.includes('SamsungBrowser')) browser = 5
