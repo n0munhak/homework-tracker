@@ -23,12 +23,14 @@ export async function POST(request: Request) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: i18n.noPKSession[clientLang] }), { status: 400 });
     }
-    const sessionData = await sessionsCollection.findOne({ session: data.session });
+    const hashedSession = await globalThis.crypto.subtle.digest(new TextEncoder().encode(data.session));
+    const hashedSessionString = Buffer.from(hashedSession).toString('hex');
+    const sessionData = await sessionsCollection.findOne({ session: hashedSessionString });
     if (!sessionData) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: i18n.invalidPKSession[clientLang] }), { status: 400 });
     }
-    await sessionsCollection.deleteOne({ session: data.session });
+    await sessionsCollection.deleteOne({ session: hashedSessionString });
     const usersCollection = db.collection('users');
     try {
         const passkey = await usersCollection.findOne({ "passkeys.credentialID": response.id });
@@ -49,28 +51,27 @@ export async function POST(request: Request) {
                 counter: authenticator.counter,
                 transports: authenticator.transports
             },
-            requireUserVerification: false
+            requireUserVerification: true
         });
         const { verified } = verification;
         if (!verified) {
             client.close();
             return new Response(JSON.stringify({ code: 1, msg: i18n.invalidPasskey[clientLang] }), { status: 401 });
         }
-        let token = '';
-        for (let i = 0; i < 64; i++) {
-            token += Math.floor(Math.random() * 16).toString(16);
-        }
+        const tokenBuf = new Uint8Array(32);
+        crypto.getRandomValues(tokenBuf);
+        const token = Array.from(tokenBuf).map(b => b.toString(16).padStart(2, '0')).join('');
         const UAString = request.headers.get('User-Agent') || '';
         let device = 0;
         if (UAString.includes('Windows')) device = 1;
         else if (UAString.includes('Macintosh')) {
-            if (request.headers.get('X-Is-Mobile') === '1') device = 5;
+            if (request.headers.get('X-Is-Mobile') === '1') device = 5; // iPad Desktop Mode
             else device = 2;
         }
-        else if (UAString.includes('Linux')) device = 3;
+        else if (UAString.includes('Android')) device = 6;
         else if (UAString.includes('iPhone')) device = 4;
         else if (UAString.includes('iPad')) device = 5;
-        else if (UAString.includes('Android')) device = 6;
+        else if (UAString.includes('Linux')) device = 3;
         let browser = 0;
         if (UAString.includes('Edg')) browser = 4
         else if (UAString.includes('SamsungBrowser')) browser = 5
