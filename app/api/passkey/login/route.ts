@@ -23,7 +23,7 @@ export async function POST(request: Request) {
         client.close();
         return new Response(JSON.stringify({ code: 1, msg: i18n.noPKSession[clientLang] }), { status: 400 });
     }
-    const hashedSession = await globalThis.crypto.subtle.digest(new TextEncoder().encode(data.session));
+    const hashedSession = await globalThis.crypto.subtle.digest('SHA-512', new TextEncoder().encode(data.session));
     const hashedSessionString = Buffer.from(hashedSession).toString('hex');
     const sessionData = await sessionsCollection.findOne({ session: hashedSessionString });
     if (!sessionData) {
